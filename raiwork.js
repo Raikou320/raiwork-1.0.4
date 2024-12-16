@@ -316,7 +316,6 @@ class Game {
       });
     }
   }
-}
   moveEntity(name, x, y) {
     const index = this.entitys.findIndex((entity) => entity.name === name);
     if (index !== -1) {
