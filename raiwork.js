@@ -41,48 +41,48 @@ class InputManager {
     });
   }
 }
+
 class Collider {
   constructor(object1, object2, callback) {
     this.object1 = object1;
     this.object2 = object2;
-    typeof callback === 'function'
-      ? (this.callback = callback)
-      : console.warn('The callback is not a function');
+    if (typeof callback === 'function') {
+      this.callback = callback;
+    } else {
+      console.warn('The callback is not a function');
+      this.callback = null; // On neutralise le callback si ce n'est pas une fonction
+    }
   }
   collide() {
-    if (
-      (!this.object1.x && !this.object1.x === 0) ||
-      (!this.object1.y && !this.object1.y === 0)
-    ) {
+    if (this.object1.x == null || this.object1.y == null) {
       return console.warn('Missing X or Y at object 1 of collider');
     }
-    if (
-      (!this.object2.x && !this.object2.x === 0) ||
-      (!this.object2.y && !this.object2.y === 0)
-    ) {
+    if (this.object2.x == null || this.object2.y == null) {
       return console.warn('Missing X or Y at object 2 of collider');
     }
     if (
-      this.object1.width &&
-      this.object2.width &&
-      this.object1.height &&
-      this.object2.height
+      this.object1.width != null &&
+      this.object1.height != null &&
+      this.object2.width != null &&
+      this.object2.height != null
     ) {
       if (
         this.object1.x < this.object2.x + this.object2.width &&
         this.object1.x + this.object1.width > this.object2.x &&
         this.object1.y < this.object2.y + this.object2.height &&
-        this.object1.y + this.object1.width > this.object2.y
+        this.object1.y + this.object1.height > this.object2.y
       ) {
-        this.callback();
+        this.callback?.();
+        return;
       }
     }
-    if (this.object1.r && this.object2.r) {
+    if (this.object1.r != null && this.object2.r != null) {
       const distanceX = this.object1.x - this.object2.x;
       const distanceY = this.object1.y - this.object2.y;
       const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
       if (distance < this.object1.r + this.object2.r) {
-        this.callback();
+        this.callback?.(); // Appelle le callback si défini
+        return;
       }
     }
   }
@@ -290,6 +290,14 @@ class Game {
     }
   }
   addCollider(object1, object2, callback) {
+    if (!object1 || !object2) {
+      console.warn('object1 or object2 is missing in addCollider.');
+      return;
+    }
+    if (typeof callback !== 'function') {
+      console.warn('Callback must be a function in addCollider.');
+      return;
+    }
     const collider = new Collider(object1, object2, callback);
     this.colliders.push(collider);
   }
@@ -300,12 +308,15 @@ class Game {
     if (index !== -1) {
       this.colliders[index].collide();
     } else {
-      console.warn('Collider object non correct did you mean:');
-      this.colliders.forEach((collider) =>
-        console.warn(collider.object1 + ' ' + collider.object2)
-      );
+      console.warn('Collider not found for the given objects. Did you mean:');
+      this.colliders.forEach((collider) => {
+        console.warn(
+          `Object1: ${JSON.stringify(collider.object1)}; Object2: ${JSON.stringify(collider.object2)}`
+        );
+      });
     }
   }
+}
   moveEntity(name, x, y) {
     const index = this.entitys.findIndex((entity) => entity.name === name);
     if (index !== -1) {
